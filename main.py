@@ -56,7 +56,7 @@ RIPPLE_SPACING = 12      # distance between waves
 SPEED = 2                # pixels per frame
 FADE_STEPS = 1           # number of visible ripples
 
-def draw_frame(radius):
+def draw_circle(radius):
     display.set_pen(BLACK)
     display.clear()
     
@@ -142,20 +142,20 @@ def main(settings: BreathingSettings):
 
                 progress = min(1.0 * elapsed / current_cycle_length_ms, 1.0)
 
-                radius = 0
+                min_radius = 5
                 if mode == Mode.IN:
-                    radius = int(progress * MAX_RADIUS)
+                    radius = max(min_radius, int(progress * MAX_RADIUS))
                 elif mode == Mode.HOLD:
                     radius = MAX_RADIUS
                 elif mode == Mode.OUT:
-                    radius = int((1.0 - progress) * MAX_RADIUS)
+                    radius = max(min_radius, int((1.0 - progress) * MAX_RADIUS))
                 elif mode == Mode.STAY:
-                    radius = 0
+                    radius = min_radius
                 else:
                     raise Exception("Unknown mode")
-                
+
                 #print(radius, elapsed, progress, MAX_RADIUS, progress * MAX_RADIUS)
-                draw_frame(radius)
+                draw_circle(radius)
 
                 # make interruptable
                 if any_button_pressed():
@@ -170,7 +170,15 @@ def main(settings: BreathingSettings):
         if elapsed_total > total_duration_ms:
             break
     bequiet()
-    
+
+    # final tone at end
+    final_start_time = time.ticks_ms()
+    playtone(settings.get_signal_tone(Mode.STAY))
+    while True:
+        elapsed = time.ticks_diff(time.ticks_ms(), final_start_time)
+        if elapsed > 500:
+            break
+    bequiet()
 
 clear_display()
 # no button press was detected
@@ -184,24 +192,24 @@ half_seconds_per_round = 11
 
 current_selected_line = 1
 
-def draw_text(text, x, y, scale = 4, underline=False, clearing=False):
-    
+def draw_text(text, x, y, scale=4, underline=False, clearing=False):
     text_width = display.measure_text(text, scale=scale)
     text_height = int(8 * scale)  # bitmap8 is ~8px tall
-    
-    #if clearing:
+
+    # if clearing:
     display.set_pen(BLACK)
-    display.rectangle(x, y + text_height, text_width, y)   # height of underline
-    
+    display.rectangle(x, y, text_width + display.measure_text(" ", scale=scale), y + text_height)  # height of underline
+
     display.set_pen(BASE_COLOR)
-        
+
     display.text(text, x, y, text_width, scale=scale)
 
     if underline:
         # underline position (y + font height)
         display.line(x, y + text_height, x + text_width, y + text_height)
 
-def write_menu():    
+
+def write_menu():
     display.set_pen(BASE_COLOR)
     scale_title = 3.5
     scale_text = 2
@@ -210,7 +218,7 @@ def write_menu():
     draw_text("Pico Atemcoach ", 0, 0, scale=scale_title)
     draw_text("------------------- ", 0, 20, scale=scale_title)
     draw_text("Dauer [min]:", 0, 60, scale=scale_text)
-    draw_text("%s" % settings.total_duration, 140, 50, scale=4, underline=current_selected_line == 1)
+    draw_text("%s" % settings.total_duration, 140, 55, scale=scale_settings, underline=current_selected_line == 1)
     
     draw_text("Dauer Atemphasen:", 0, 100, scale=scale_text)
     draw_text(" in", 5, 130, scale=scale_text)
