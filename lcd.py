@@ -2,8 +2,26 @@ from machine import Pin,SPI,PWM
 import framebuf
 import time
 
-import pico_lcd_096
+big_screen = False
+if big_screen:
+    import pico_lcd_114 as pico_lcd
+    lcd = pico_lcd.LCD_1inch14()
+    
+    LINE_HEIGHT = 10 + 12
+    Y_OFFSET = 8
+    def lcd_show():
+        lcd.show()
+else:
+    import pico_lcd_096 as pico_lcd
+    lcd = pico_lcd.LCD_0inch96()
+    
+    LINE_HEIGHT = 10 + 4
+    Y_OFFSET = 0
+    def lcd_show():
+        lcd.display()
+
 from lib import Mode
+
 #color is BGR
 RED = 0x00F8
 GREEN = 0xE007
@@ -12,11 +30,9 @@ WHITE = 0xFFFF
 BLACK = 0x0000
 
 
-LINE_HEIGHT = 10 + 4
-TOP_OFFSET = 20
 
 def draw_text(text, x, line, scale=4, selected=False):
-    y = line*LINE_HEIGHT
+    y = Y_OFFSET + line*LINE_HEIGHT
     if selected:
         lcd.text(">", x - 8, y, WHITE)
     lcd.text(text, x, y, RED)
@@ -31,7 +47,6 @@ KEY_CTRL=Pin(3,Pin.IN,Pin.PULL_UP)
 KEY_A=Pin(15,Pin.IN,Pin.PULL_UP)
 KEY_B=Pin(17,Pin.IN,Pin.PULL_UP)
 
-lcd = pico_lcd_096.LCD_0inch96()
 
 def button_up():
     return KEY_UP.value() == 0 or KEY_LEFT.value() == 0
@@ -85,7 +100,7 @@ def write_menu(settings, current_selection):
     line = draw_text("nat", x_offset_4, line-1, selected=current_selection == 9)
 
     line = draw_text("START BREATHING", x_offset, line, selected=current_selection == 10)
-    lcd.display()
+    lcd_show()
     
     
     
@@ -104,5 +119,5 @@ def visualize(progress, mode):
     else:
         raise Exception("Unknown mode")
 
-    lcd.display()
+    lcd_show()
 
