@@ -63,14 +63,15 @@ display = lcd
 def clear_display():
     lcd.fill(BLACK)
 
+
 from pimoroni import Buzzer
-BUZZER = Buzzer
+BUZZER = Buzzer(0)
 
-def playtone(freq):
-    pass
+def playtone(frequency):            # this function tells your program how to make noise
+    BUZZER.set_tone(frequency)
 
-def bequiet():
-    pass
+def bequiet():                      # this function tells your program how not to make noise
+    BUZZER.set_tone(-1)
 
 
 def write_menu(settings, current_selection):
